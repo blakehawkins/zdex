@@ -3,6 +3,11 @@ name = "zdex"
 version = "0.1.0"
 authors = ["blakehawkins"]
 edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Z-indexes bit-collections into a packed Vob"
+homepage = "https://github.com/blakehawkins/zdex"
+documentation = "https://github.com/blakehawkins/zdex"
+repository = "https://github.com/blakehawkins/zdex"
 
 [dependencies]
 bit_collection = "0.2.3"
