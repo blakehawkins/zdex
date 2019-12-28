@@ -21,3 +21,13 @@ fn main() -> Result<(), std::io::Error> {
   Ok(())
 }
 ```
+
+## Todo
+
+- [ ] docs example: custom BitCollections
+- [ ] docs example: practical example with z-order index ranges
+- [ ] docs example: manipulating result vob
+- [ ] docs quality: rustdoc + docs.rs link
+- [ ] key feature: z-indexes over heterogeneous bitcollections
+- [ ] key feature: `is_relevant` and `next_jump_in`
+- [ ] feature: iterator over sub-ranges (Page Jump Querying heuristic)
