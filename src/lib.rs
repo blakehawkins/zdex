@@ -1,21 +1,29 @@
+//! Zdex is for evaluating z-order indexes (morton encoding) for types,
+//! iterators, and tuples of
+//! [BitCollections](https://crates.io/crates/bit_collection).
+//!
+//! Z-order indexing is a database range-querying technique to optimise
+//! scanning performance, and Zdex aims to be prescriptive in providing that
+//! functionality.
+
 use bit_collection::{BitIter, BitCollection};
 use vob::{vob, Vob};
 
-pub struct Ziter<Z>(Z);
 
-impl<Z> std::ops::Deref for Ziter<Z> {
-    type Target = Z;
-    fn deref(&self) -> &Z { &self.0 }
-}
-
+/// Trait for implementing `z_index()` for `BitCollection`s.  A blanket
+/// implementation is provided for `BitCollection<Item=BitU8>`.
 pub trait Zdexed {
     fn z_index(self) -> std::io::Result<vob::Vob>;
 }
 
+/// A trait for implementing `Zdexed` over iterables.  A blanket implementation
+/// is provided for `IntoIter<T: Zdexed>`.
 pub trait ZdexedIter {
     fn z_index(self) -> std::io::Result<vob::Vob>;
 }
 
+/// A trait for implementing `Zdexed` over tuples.  A blanket implementation is
+/// provided for homogeneous 2-, 3-, and 4- tuples.
 pub trait ZdexedTup {
     fn z_index(self) -> std::io::Result<vob::Vob>;
 }
@@ -121,13 +129,36 @@ impl<T> ZdexedTup for (T, T, T, T)
     }
 }
 
-/// A common value representing the index of the iterated true-valued bit.
+/// The `BitCollection::Item`-type prescribed by Zdex for use in
+/// `Zdexed`-compatible `BitCollections`.  Custom `BitCollection`s specified
+/// for use with Zdex must therefore specify `#[bit(BitU8, ...]`.
 #[derive(Copy, Clone, Debug)]
 pub struct BitU8(pub u8);
 
+/// A built-in Zdex-compatible `BitCollection` for `u8`.
 #[bit(BitU8, mask = "!0", retr = "0")]
 #[derive(Copy, Clone, BitCollection, Debug)]
 pub struct FromU8(u8);
+
+/// A built-in Zdex-compatible `BitCollection` for `u16`.
+#[bit(BitU8, mask = "!0", retr = "0")]
+#[derive(Copy, Clone, BitCollection, Debug)]
+pub struct FromU16(u16);
+
+/// A built-in Zdex-compatible `BitCollection` for `u32`.
+#[bit(BitU8, mask = "!0", retr = "0")]
+#[derive(Copy, Clone, BitCollection, Debug)]
+pub struct FromU32(u32);
+
+/// A built-in Zdex-compatible `BitCollection` for `u64`.
+#[bit(BitU8, mask = "!0", retr = "0")]
+#[derive(Copy, Clone, BitCollection, Debug)]
+pub struct FromU64(u64);
+
+/// A built-in Zdex-compatible `BitCollection` for `u128`.
+#[bit(BitU8, mask = "!0", retr = "0")]
+#[derive(Copy, Clone, BitCollection, Debug)]
+pub struct FromU128(u128);
 
 
 #[cfg(test)]

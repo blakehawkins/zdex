@@ -128,3 +128,4 @@ fn main() -> Result<(), std::io::Error> {
 - [ ] key feature: `is_relevant` and `next_jump_in`
 - [ ] feature: iterator over sub-ranges (Page Jump Querying heuristic)
 - [ ] docs metadata: crates.io tags
+- [ ] code quality: rustfmt + clippy
