@@ -58,11 +58,71 @@ fn main() -> Result<(), std::io::Error> {
 }
 ```
 
+Practical example: querying over a (lon, lat) z-index:
+
+```rust
+use bit_collection::*;
+use std::collections::BTreeMap;
+use zdex::*;
+
+#[bit(BitU8, mask = "!0", retr = "0")]
+#[derive(BitCollection, Clone, Copy, Debug)]
+pub struct LonLatVal(i32);
+
+fn lonlat_val(lonlat: (f32, f32)) -> (LonLatVal, LonLatVal) {
+    (LonLatVal(lonlat.0 as i32), LonLatVal(lonlat.1 as i32))
+}
+
+fn main() -> Result<(), std::io::Error> {
+    let database = vec![
+        ((  -0.127758,  51.507351), "London"),
+        ((   2.352222,  48.856613), "Paris"),
+        ((  10.752245,  59.913868), "Oslo"),
+        (( -74.005974,  40.712776), "New York"),
+        ((-118.243683,  34.052235), "Los Angeles"),
+        (( -46.633308, -23.550520), "Sao Paolo"),
+        (( 151.209290, -33.868820), "Sydney"),
+    ].into_iter()
+    .map(|(lonlat, loc)| (
+        lonlat_val(lonlat),
+        loc
+    )).map(|(lonlat, loc)| (
+        lonlat
+            .z_index()
+            .map(|v| v.iter_storage().next().expect("empty vob"))
+            .expect("failed to produce z-index"),
+            loc
+    )).collect::<BTreeMap<_, _>>();
+
+    let usa_query = (
+        lonlat_val((-200.0, 20.0))
+            .z_index()?
+            .iter_storage()
+            .next()
+            .expect("empty vob")
+    )..(
+        lonlat_val((-50.0, 50.0))
+            .z_index()?
+            .iter_storage()
+            .next()
+            .expect("empty vob")
+    );
+
+    // Prints `["New York", "Los Angeles"]`.
+    println!(
+        "{:?}",
+        database.range(usa_query).map(|(_k, v)| v).collect::<Vec<_>>()
+    );
+
+    Ok(())
+}
+```
+
 ## Todo
 
 - [x] docs example: custom BitCollections
-- [ ] docs example: practical example with z-order index ranges
-- [ ] docs example: manipulating result vob
+- [x] docs example: practical example with z-order index ranges
+- [x] docs example: manipulating result vob
 - [ ] docs quality: rustdoc + docs.rs link
 - [ ] key feature: z-indexes over heterogeneous `BitCollections`
 - [ ] key feature: `is_relevant` and `next_jump_in`
