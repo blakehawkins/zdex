@@ -12,7 +12,7 @@ See also [`morton_encoding`](https://crates.io/crates/morton_encoding).
 
 Basic example using built-in `FromU8` BitCollection:
 
-```
+```rust
 use zdex::*;
 
 fn main() -> Result<(), std::io::Error> {
@@ -28,7 +28,7 @@ fn main() -> Result<(), std::io::Error> {
 
 Example with custom BitCollection and high dimensionality:
 
-```
+```rust
 use bit_collection::*;
 use zdex::*;
 
