@@ -123,7 +123,7 @@ impl<T> ZdexedTup for (T, T, T, T)
 
 /// A common value representing the index of the iterated true-valued bit.
 #[derive(Copy, Clone, Debug)]
-pub struct BitU8(u8);
+pub struct BitU8(pub u8);
 
 #[bit(BitU8, mask = "!0", retr = "0")]
 #[derive(Copy, Clone, BitCollection, Debug)]
