@@ -1,0 +1,9 @@
+[package]
+name = "zdex"
+version = "0.1.0"
+authors = ["blakehawkins"]
+edition = "2018"
+
+[dependencies]
+bit_collection = "0.2.3"
+vob = "2.0.4"
