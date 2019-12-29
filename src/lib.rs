@@ -216,8 +216,7 @@ impl<T, U> ZdexedIter for T
     }
 }
 
-impl<T> ZdexedTup for (T, T)
-    where T: Zdexed
+impl ZdexedTup for (Zdexed, Zdexed)
 {
     fn z_index(self) -> std::io::Result<vob::Vob> {
         vec![self.0, self.1].into_iter().z_index()
@@ -320,6 +319,28 @@ mod tests {
                 false, false, false,
                 false,  true,  true,
                 false, false, false]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn heterogeneous_tuples() -> Result<(), std::io::Error> {
+        let my_u8:  FromU8  = 0xf0.into();
+        let my_u16: FromU16 = 0xff00.into();
+
+        assert_eq!(
+            (my_u8, my_u16)
+                .z_index()?
+                .iter_storage()
+                .next()
+                .expect("empty vob"),
+            //   0b0000_0000_1111_0000
+            // z 0b1111_1111_0000_0000
+            // ==
+            //   0b00000000_00000000_10101010_00000000
+            // ^ 0b01010101_01010101_00000000_00000000
+            0b_____01010101_01010101_10101010_00000000
         );
 
         Ok(())
