@@ -4,7 +4,7 @@
 [crates.io]: https://crates.io/crates/zdex
 [License]: https://img.shields.io/crates/l/zdex.svg
 [Docs badge]: https://img.shields.io/badge/docs.rs-rustdoc-green
-[docs.rs]: https://docs.rs/crate/zdex/
+[docs.rs]: https://docs.rs/zdex/
 
 Evaluate [Z-order indexing](https://aws.amazon.com/blogs/database/z-order-indexing-for-multifaceted-queries-in-amazon-dynamodb-part-1/) for types, iterators, and tuples of [BitCollection](https://crates.io/crates/bit_collection)s.
 
@@ -125,7 +125,7 @@ fn main() -> Result<(), std::io::Error> {
 - [x] docs example: custom BitCollections
 - [x] docs example: practical example with z-order index ranges
 - [x] docs example: manipulating result vob
-- [ ] docs quality: rustdoc + docs.rs link
+- [x] docs quality: rustdoc + docs.rs link
 - [ ] key feature: z-indexes over heterogeneous `BitCollections`
 - [ ] key feature: `is_relevant` and `next_jump_in`
 - [ ] feature: iterator over sub-ranges (Page Jump Querying heuristic)
