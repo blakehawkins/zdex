@@ -1,10 +1,12 @@
-# Zdex &emsp; [![Latest version]][crates.io] [![License]][crates.io] [![Docs badge]][docs.rs]
+# Zdex &emsp; [![Latest version]][crates.io] [![License]][crates.io] [![Docs badge]][docs.rs] [![Issues badge]][issues]
 
 [Latest version]: https://img.shields.io/crates/v/zdex.svg
 [crates.io]: https://crates.io/crates/zdex
 [License]: https://img.shields.io/crates/l/zdex.svg
 [Docs badge]: https://img.shields.io/badge/docs.rs-rustdoc-green
 [docs.rs]: https://docs.rs/zdex/
+[Issues badge]: https://img.shields.io/github/issues/blakehawkins/zdex
+[issues]: https://github.com/blakehawkins/zdex/issues
 
 Evaluate [Z-order indexing](https://aws.amazon.com/blogs/database/z-order-indexing-for-multifaceted-queries-in-amazon-dynamodb-part-1/) for types, iterators, and tuples of [BitCollection](https://crates.io/crates/bit_collection)s.
 
@@ -28,15 +30,3 @@ fn main() -> Result<(), std::io::Error> {
   Ok(())
 }
 ```
-
-## Todo
-
-- [x] docs example: custom BitCollections
-- [x] docs example: practical example with z-order index ranges
-- [x] docs example: manipulating result vob
-- [x] docs quality: rustdoc + docs.rs link
-- [ ] key feature: z-indexes over heterogeneous `BitCollections`
-- [ ] key feature: `is_relevant` and `next_jump_in`
-- [ ] feature: iterator over sub-ranges (Page Jump Querying heuristic)
-- [ ] docs metadata: crates.io tags
-- [ ] code quality: rustfmt + clippy
