@@ -165,15 +165,13 @@ impl<T> Zdexed for T
     }
 }
 
-impl<T, U> ZdexedIter for T
-    where T: IntoIterator<Item=U>,
-          U: Zdexed
+impl<'a, T> ZdexedIter for T
+    where T: Iterator<Item=&'a dyn Zdexed>
 {
     fn z_index(self) -> std::io::Result<vob::Vob> {
-        let vobs: Vec<vob::Vob> = self
-            .into_iter()
-            .map(|z| z.z_index())
-            .collect::<Result<Vec<_>, _>>()?;
+        let vobs: &Vec<vob::Vob> = self
+            .map(|z| &z.z_index())
+            .collect::<Result<&Vec<_>, _>>()?;
 
         let size = vobs.iter().map(|v| v.len()).max().unwrap_or(0);
 
@@ -216,23 +214,21 @@ impl<T, U> ZdexedIter for T
     }
 }
 
-impl ZdexedTup for (Zdexed, Zdexed)
+impl ZdexedTup for (&dyn Zdexed, &dyn Zdexed)
 {
     fn z_index(self) -> std::io::Result<vob::Vob> {
         vec![self.0, self.1].into_iter().z_index()
     }
 }
 
-impl<T> ZdexedTup for (T, T, T)
-    where T: Zdexed
+impl ZdexedTup for (&dyn Zdexed, &dyn Zdexed, &dyn Zdexed)
 {
     fn z_index(self) -> std::io::Result<vob::Vob> {
         vec![self.0, self.1, self.2].into_iter().z_index()
     }
 }
 
-impl<T> ZdexedTup for (T, T, T, T)
-    where T: Zdexed
+impl ZdexedTup for (&dyn Zdexed, &dyn Zdexed, &dyn Zdexed, &dyn Zdexed)
 {
     fn z_index(self) -> std::io::Result<vob::Vob> {
         vec![self.0, self.1, self.2, self.3].into_iter().z_index()
@@ -292,7 +288,7 @@ mod tests {
         let v1: FromU8 = 0b010.into();
         let v2: FromU8 = 0b100.into();
         assert_eq!(
-            vec![v1, v2].z_index()?,
+            vec![&v1, &v2].iter().z_index()?,
             vob![false, true, true, false, false, false]
         );
 
