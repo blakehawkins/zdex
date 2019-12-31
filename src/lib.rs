@@ -116,7 +116,6 @@
 //! }
 //! ```
 
-
 use bit_collection::{BitIter, BitCollection};
 use vob::{vob, Vob};
 
@@ -140,10 +139,10 @@ pub trait ZdexedTup {
 }
 
 impl<'a, T> Zdexed for &'a T
-    where T: BitCollection<Item=BitU8> + Copy + std::fmt::Debug
+    where T: BitCollection<Item=BitU8> + Clone + ?Sized
 {
     fn z_index(&self) -> std::io::Result<vob::Vob> {
-        let size: usize = self
+        let size = (*self)
             .clone()
             .as_iter()
             .map(|v| v.0 as usize)
@@ -153,7 +152,7 @@ impl<'a, T> Zdexed for &'a T
         let mut vob_init = vob![];
         vob_init.resize(size + 1, false);
 
-        Ok(self
+        Ok((*self)
            .clone()
            .as_iter()
            .fold(vob_init, |mut vob, idx| {
@@ -165,11 +164,12 @@ impl<'a, T> Zdexed for &'a T
     }
 }
 
-impl<'a, T> ZdexedIter for T
-    where T: Iterator<Item=&'a dyn Zdexed>
+impl<'a, T> ZdexedIter for &'a T
+    where T: Iterator<Item=&'a dyn Zdexed> + Clone + ?Sized
 {
     fn z_index(&self) -> std::io::Result<vob::Vob> {
-        let vobs: Vec<_> = self
+        let vobs: Vec<_> = (*self)
+            .clone()
             .map(|z| z.z_index())
             .collect::<Result<_, _>>()?;
 
@@ -214,24 +214,34 @@ impl<'a, T> ZdexedIter for T
     }
 }
 
-impl ZdexedTup for (&dyn Zdexed, &dyn Zdexed)
+trait ZdexedTupShim {
+    type Params; // = dyn Zdexed + Clone + BitCollection<Item=BitU8>;
+}
+
+impl<'a> ZdexedTup for (&'a dyn ZdexedTupShim<Params=dyn Zdexed + Clone + BitCollection<Item=BitU8>>, &'a dyn ZdexedTupShim<Params=dyn Zdexed + Clone + BitCollection<Item=BitU8>>)
 {
     fn z_index(&self) -> std::io::Result<vob::Vob> {
-        vec![self.0, self.1].into_iter().z_index()
+        ZdexedIter::z_index(
+            &vec![self.0, self.1].into_iter()
+        )
     }
 }
 
-impl ZdexedTup for (&dyn Zdexed, &dyn Zdexed, &dyn Zdexed)
+impl<'a> ZdexedTup for (&'a dyn Zdexed, &'a dyn Zdexed, &'a dyn Zdexed)
 {
     fn z_index(&self) -> std::io::Result<vob::Vob> {
-        vec![self.0, self.1, self.2].into_iter().z_index()
+        ZdexedIter::z_index(&vec![self.0, self.1, self.2].into_iter())
     }
 }
 
-impl ZdexedTup for (&dyn Zdexed, &dyn Zdexed, &dyn Zdexed, &dyn Zdexed)
-{
+impl<'a> ZdexedTup for (
+    &'a dyn Zdexed,
+    &'a dyn Zdexed,
+    &'a dyn Zdexed,
+    &'a dyn Zdexed
+) {
     fn z_index(&self) -> std::io::Result<vob::Vob> {
-        vec![self.0, self.1, self.2, self.3].into_iter().z_index()
+        (&vec![self.0, self.1, self.2, self.3].into_iter()).z_index()
     }
 }
 
@@ -274,11 +284,11 @@ mod tests {
 
     #[test]
     fn it_works() -> Result<(), std::io::Error> {
-        let v: FromU8 = 0b10000101.into();
+        let v1: FromU8 = 0b10000101.into();
         let v2: FromU8 = 0b11.into();
         assert_eq!((&v2).z_index()?, vob![true, true]);
         assert_eq!(
-            (&v).z_index()?,
+            (&v1).z_index()?,
             vob![true, false, false, false, false, true, false, true]
         );
         Ok(())
@@ -289,7 +299,7 @@ mod tests {
         let v1: FromU8 = 0b010.into();
         let v2: FromU8 = 0b100.into();
         assert_eq!(
-            vec![&v1, &v2].iter().z_index()?,
+            ZdexedIter::z_index(&vec![&v1 as &dyn Zdexed, &v2 as &dyn Zdexed].iter())?,
             vob![false, true, true, false, false, false]
         );
 
