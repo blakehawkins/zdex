@@ -118,40 +118,40 @@
 
 
 use bit_collection::{BitIter, BitCollection};
-use vob::{vob, Vob};
+use std::iter::FromIterator;
+use vob::Vob;
 
 
 /// Trait for implementing `z_index()` for `BitCollection`s.  A blanket
 /// implementation is provided for `BitCollection<Item=BitU8>`.
 pub trait Zdexed {
-    fn z_index(self) -> std::io::Result<vob::Vob>;
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>>;
 }
 
 /// A trait for implementing `Zdexed` over iterables.  A blanket implementation
-/// is provided for `IntoIter<T: Zdexed>`.
+/// is provided for `IntoIterator<T: Zdexed>`.
 pub trait ZdexedIter {
-    fn z_index(self) -> std::io::Result<vob::Vob>;
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>>;
 }
 
 /// A trait for implementing `Zdexed` over tuples.  A blanket implementation is
 /// provided for homogeneous 2-, 3-, and 4- tuples.
 pub trait ZdexedTup {
-    fn z_index(self) -> std::io::Result<vob::Vob>;
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>>;
 }
 
 impl<T> Zdexed for T
     where T: BitCollection<Item=BitU8> + Copy + std::fmt::Debug
 {
-    fn z_index(self) -> std::io::Result<vob::Vob> {
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>> {
         let size: usize = self
             .clone()
             .as_iter()
             .map(|v| v.0 as usize)
             .max()
             .unwrap_or(0);
-        
-        let mut vob_init = vob![];
-        vob_init.resize(size + 1, false);
+
+        let vob_init = Vob::<u8>::new_with_storage_type(size + 1);
 
         Ok(self
            .clone()
@@ -165,41 +165,58 @@ impl<T> Zdexed for T
     }
 }
 
+struct VobU8Shim(Vob<u8>);
+
+impl FromIterator<bool> for VobU8Shim {
+    fn from_iter<I: IntoIterator<Item = bool>>(iter: I) -> VobU8Shim {
+        let mut v = Vob::<u8>::new_with_storage_type(0);
+        v.extend(iter);
+
+        VobU8Shim(v)
+    }
+}
+
+pub fn vob_u8<'a, I: IntoIterator<Item = bool>>(iter: I) -> Vob<u8> {
+    let mut ret = Vob::<u8>::new_with_storage_type(0);
+    Vob::extend::<dyn IntoIterator<Item=u8, IntoIter = Vob<u8>>>(&mut ret, iter.into());
+
+    ret
+}
+
 impl<T, U> ZdexedIter for T
     where T: IntoIterator<Item=U>,
           U: Zdexed
 {
-    fn z_index(self) -> std::io::Result<vob::Vob> {
-        let vobs: Vec<vob::Vob> = self
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>> {
+        let vobs: Vec<vob::Vob<u8>> = self
             .into_iter()
             .map(|z| z.z_index())
             .collect::<Result<Vec<_>, _>>()?;
 
         let size = vobs.iter().map(|v| v.len()).max().unwrap_or(0);
 
-        let vobs: Vec<vob::Vob> = vobs
+        let vobs: Vec<vob::Vob<u8>> = vobs
             .into_iter()
             .map(|mut v| {
                 let diff = size - v.len();
                 v.resize(size, false);
 
                 let mut v = v.into_iter().collect::<Vec<_>>();
-                
+
                 for _ in 0..diff {
                     v.rotate_right(1);
                 }
-                
-                v.into_iter().collect()
+
+                v.into_iter().collect::<VobU8Shim>().0
             })
             .collect();
 
-        let mut res = vob![];
-        res.resize(vobs.len() * (size), false);
+        let mut res = Vob::<u8>::new_with_storage_type(vobs.len() * size);
 
         let mut vobs = vobs
             .iter()
             .map(|ref v| v.iter().peekable())
-            .collect::<Vec<std::iter::Peekable<vob::Iter<usize>>>>();
+            .collect::<Vec<std::iter::Peekable<vob::Iter<u8>>>>();
 
         let mut i = 0;
         loop {
@@ -219,7 +236,7 @@ impl<T, U> ZdexedIter for T
 impl<T> ZdexedTup for (T, T)
     where T: Zdexed
 {
-    fn z_index(self) -> std::io::Result<vob::Vob> {
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>> {
         vec![self.0, self.1].into_iter().z_index()
     }
 }
@@ -227,7 +244,7 @@ impl<T> ZdexedTup for (T, T)
 impl<T> ZdexedTup for (T, T, T)
     where T: Zdexed
 {
-    fn z_index(self) -> std::io::Result<vob::Vob> {
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>> {
         vec![self.0, self.1, self.2].into_iter().z_index()
     }
 }
@@ -235,7 +252,7 @@ impl<T> ZdexedTup for (T, T, T)
 impl<T> ZdexedTup for (T, T, T, T)
     where T: Zdexed
 {
-    fn z_index(self) -> std::io::Result<vob::Vob> {
+    fn z_index(self) -> std::io::Result<vob::Vob<u8>> {
         vec![self.0, self.1, self.2, self.3].into_iter().z_index()
     }
 }
@@ -280,11 +297,16 @@ mod tests {
     #[test]
     fn it_works() -> Result<(), std::io::Error> {
         let v: FromU8 = 0b10000101.into();
-        assert_eq!(FromU8(0b11).z_index()?, vob![true, true]);
         assert_eq!(
             v.z_index()?,
-            vob![true, false, false, false, false, true, false, true]
+            vob_u8(vec![true, false, false, false, false, true, false, true])
         );
+
+        let mut vob_rhs = Vob::<u8>::new_with_storage_type(0);
+        vob_rhs.extend(vec![true, true]);
+
+        assert_eq!(FromU8(0b11).z_index()?, vob_rhs);
+
         Ok(())
     }
 
@@ -321,6 +343,17 @@ mod tests {
                 false,  true,  true,
                 false, false, false]
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn random_test() -> Result<(), std::io::Error> {
+        let z = &FromU16(0).z_index()?.iter_storage().collect::<Vec<_>>()[..];
+        let y = &2u16.to_be_bytes()[..];
+
+        println!("z {:?}, y {:?}", z, y);
+        assert_eq!(z[0], y[0] as usize);
 
         Ok(())
     }
